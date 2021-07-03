@@ -199,12 +199,9 @@ def runLength(input):
     numberOfZero = 0
 
     output = []
-    i = 0
-    j = 0
     # ----------------------------------
 
     while (v < vmax) and (h < hmax):
-        i += 1
 
         if ((h + v) % 2) == 0:  # going up
 
@@ -215,7 +212,6 @@ def runLength(input):
                     numberOfZero = 0
                 else:
                     numberOfZero += 1
-                    j += 1
 
                 if h == hmax:
                     v = v + 1
@@ -230,7 +226,6 @@ def runLength(input):
                     numberOfZero = 0
                 else:
                     numberOfZero += 1
-                    j += 1
 
                 v = v + 1
 
@@ -241,7 +236,6 @@ def runLength(input):
                     numberOfZero = 0
                 else:
                     numberOfZero += 1
-                    j += 1
 
                 v = v - 1
                 h = h + 1
@@ -256,7 +250,6 @@ def runLength(input):
                     numberOfZero = 0
                 else:
                     numberOfZero += 1
-                    j += 1
 
                 h = h + 1
 
@@ -268,7 +261,6 @@ def runLength(input):
                     numberOfZero = 0
                 else:
                     numberOfZero += 1
-                    j += 1
 
                 if v == vmax - 1:
                     h = h + 1
@@ -284,7 +276,6 @@ def runLength(input):
                     numberOfZero = 0
                 else:
                     numberOfZero += 1
-                    j += 1
 
                 v = v + 1
                 h = h - 1

@@ -23,6 +23,7 @@ def encode(frame):
 
     return runLengthOutput
 
+
 def internalEncode(frame):
     imf = np.float32(frame) / floatScale  # float conversion/scale
 
@@ -33,6 +34,7 @@ def internalEncode(frame):
     # Quantization
     quantizationFrame = np.round(dct / quantmatrix)
     return quantizationFrame
+
 
 def decode(frame, width, height):
     inverseRunLengthFrame = inverse_runLength(frame, width, height)
@@ -45,6 +47,7 @@ def decode(frame, width, height):
 
     return output
 
+
 def internalDecode(frame):
     quantizationFrame = frame * quantmatrix
 
@@ -54,72 +57,98 @@ def internalDecode(frame):
     return iOutFrame
 
 
-# Create a VideoCapture object and read from input file
-cap = cv2.VideoCapture('a.avi')
+if __name__ == '__main__':
+    # Create a VideoCapture object and read from input file
+    cap = cv2.VideoCapture('a.avi')
 
-# Check if camera opened successfully
-if not cap.isOpened():
-    print("Error opening video  file")
+    # Check if camera opened successfully
+    if not cap.isOpened():
+        print("Error opening video  file")
 
-# Read until video is completed
-"""
-ENCODE
-"""
-encodedFrames = []
-while cap.isOpened():
-    # Capture frame-by-frame
-    ret, frame = cap.read()
+    # Read until video is completed
+    """
+    ENCODE
+    """
+    encodedFrames = []
+    frame_count = 0
+    i_frame = None
+    p_frame = None
+    while cap.isOpened():
+        # Capture frame-by-frame
+        ret, frame = cap.read()
 
-    if ret:
-        grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        grayFrame = grayFrame[:width][:height]
-        encodeFrame = encode(grayFrame)
-        encodedFrames.append(encodeFrame)
+        if ret:
 
-    # Break the loop
-    else:
-        break
+            grayFrame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            grayFrame = grayFrame[:width][:height]
+
+            if frame_count % 6 == 0:
+                i_frame = grayFrame
+                encodeFrame = encode(i_frame)
+                encodedFrames.append(encodeFrame)
+            else:
+                p_frame = np.subtract(i_frame, grayFrame)
+                encodeFrame = encode(p_frame)
+                encodedFrames.append(encodeFrame)
+
+            frame_count += 1
+
+        # Break the loop
+        else:
+            break
+
+    """
+    SAVE TO FILE
+    """
+    with open("encodeFile.txt", "w") as f:
+        for frame in encodedFrames:
+            for element in frame:
+                f.write(f'{int(element[0])},{int(element[1])}\t')
+            f.write('\n')
+
+    """
+    LOAD FROM FILE
+    """
+    loadFrames = []
+    with open("encodeFile.txt", "r") as f:
+        for line in f:
+            temp = []
+            sp = line.split('\t')
+            for s in sp:
+                if s == '\n': continue
+                x = s.split(',')
+                temp.append([int(x[0]), int(x[1])])
+            loadFrames.append(temp)
+
+    """DECODE"""
+    frame_count = 0
+    i_frame = None
+    p_frame = None
+    for frame in loadFrames:
+
+        if frame_count % 6 == 0:
+            decodeFrame = decode(frame, width, height)
+            i_frame = decodeFrame
 
 
-"""
-SAVE TO FILE
-"""
-with open("file.txt", "w") as f:
-    for frame in encodedFrames:
-        for element in frame:
-            f.write(f'{int(element[0])},{int(element[1])}\t')
-        f.write('\n')
+        else:
+            decodeFrame = decode(frame, width, height)
+            p_frame = np.add(i_frame, decodeFrame)
+            p_frame = np.clip(p_frame, 0, 255)
+            decodeFrame = p_frame
 
+        frame_count += 1
+        print('show')
+        # Display the resulting frame
+        cv2.imshow('decodeFrame', decodeFrame)
 
-"""
-LOAD FROM FILE
-"""
-loadFrames = []
-with open("file.txt", "r") as f:
-    for line in f:
-        temp = []
-        sp = line.split('\t')
-        for s in sp:
-            if s == '\n': continue
-            x = s.split(',')
-            temp.append([int(x[0]), int(x[1])])
-        loadFrames.append(temp)
+        # Press Q on keyboard to  exit
+        if cv2.waitKey(25) & 0xFF == ord('q'):
+            break
 
-"""DECODE"""
-for frame in loadFrames:
+    # When everything done, release
+    # the video capture object
+    cap.release()
 
-    decodeFrame = decode(frame, width, height)
-    print('show')
-    # Display the resulting frame
-    cv2.imshow('decodeFrame', decodeFrame)
-
-    # Press Q on keyboard to  exit
-    if cv2.waitKey(25) & 0xFF == ord('q'):
-        break
-
-# When everything done, release
-# the video capture object
-cap.release()
-
-# Closes all the frames
-cv2.destroyAllWindows()
+    # Closes all the frames
+    cv2.destroyAllWindows()
